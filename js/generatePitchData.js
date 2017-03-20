@@ -15,11 +15,14 @@ window.generatePitchData = () => {
   const normalizedPitches = [];
   let totalPitches = 0;
   let maxPitches = 0;
+  let minPitches = Number.POSITIVE_INFINITY;
 
   for (let i = 0; i < numZones; i += 1) {
     const pitchZone = genPitchZone(25, 50);
     if (pitchZone.numPitches > maxPitches) {
       maxPitches = pitchZone.numPitches;
+    } else if (pitchZone.numPitches < minPitches) {
+      minPitches = pitchZone.numPitches;
     }
     totalPitches += pitchZone.numPitches;
     arr.push(pitchZone);
@@ -28,7 +31,7 @@ window.generatePitchData = () => {
     normalizedPitches.push(
       {
         pitchRate: arr[j].numPitches / totalPitches,
-        colorPct: arr[j].numPitches / maxPitches,
+        colorPct: (arr[j].numPitches - minPitches) / (maxPitches - minPitches),
         successRate: arr[j].successRate,
       },
     );
