@@ -13,7 +13,7 @@ const getPitchData = window.generatePitchData;
   const getCx = (d, i) => ((2 * (i % 3)) + 1) * (s / 6);
   const getCy = (d, i) => (((2 * Math.floor(i / 3)) + 1) * (s / 6)) + titleHeight;
 
-  const colorInterpolator = d3.interpolateRgb(lowColor, highColor);
+  const colorInterpolator = d3.interpolateLab(lowColor, highColor);
   const svg = d3.select('#app')
     .append('svg')
     .attr('width', s)
