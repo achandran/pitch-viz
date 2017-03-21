@@ -6,8 +6,10 @@ const getPitchData = window.generatePitchData;
   const margin = 5;
   const titleHeight = 50;
   const legendAreaHeight = 90;
-  const lowColor = 'rgba(0, 148, 217, 1)';
-  const highColor = 'rgba(191, 49, 0, 1)';
+
+  // use lineupbuilder blue (low) and red (high) colors
+  const lowColor = d3.lab('rgba(0, 148, 217, 1)');
+  const highColor = d3.lab('rgba(191, 49, 0, 1)');
 
   // calculate coordinates for circle centers
   const getCx = (d, i) => ((2 * (i % 3)) + 1) * (s / 6);
@@ -19,7 +21,6 @@ const getPitchData = window.generatePitchData;
     .attr('width', s)
     .attr('height', s + (titleHeight + margin) + (legendAreaHeight + margin));
 
-  // Append a linearGradient element to the defs and give it a unique id
   const linearGradient = svg.append('defs')
     .append('linearGradient')
     .attr('id', 'linear-gradient');
@@ -28,13 +29,9 @@ const getPitchData = window.generatePitchData;
     .attr('y1', '0%')
     .attr('x2', '100%')
     .attr('y2', '0%');
-
-  // Set the color for the start (0%)
   linearGradient.append('stop')
     .attr('offset', '0%')
     .attr('stop-color', lowColor);
-
-  // Set the color for the end (100%)
   linearGradient.append('stop')
     .attr('offset', '100%')
     .attr('stop-color', highColor);
@@ -92,6 +89,7 @@ const getPitchData = window.generatePitchData;
     .attr('height', 20)
     .style('fill', 'url(#linear-gradient)');
 
+  // Shared text styles
   svg.selectAll('text')
     .attr('font-family', 'Helvetica Neue, Helvetica, Arial, san-serif')
     .attr('font-weight', 300)
