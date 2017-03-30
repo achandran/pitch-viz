@@ -10,7 +10,7 @@ function genPitchZone(minPitchCount, maxPitchCount) {
 }
 
 window.generatePitchData = () => {
-  const numZones = 9;
+  const numZones = 13;
   const arr = [];
   const normalizedPitches = [];
   let totalPitches = 0;

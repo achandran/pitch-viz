@@ -1,30 +1,79 @@
 const getPitchData = window.generatePitchData;
 
+/*
+ * Pitch visualization
+ * Displays a heatmap of pitch distributions from zones 1 through 13:
+ *
+ *        10
+ *     1  2  3
+ * 13  4  5  6  11
+ *     7  8  9
+ *        12
+ *  Zones 10 through 13 are ball zones
+ */
+
 (() => {
-  const dataset = getPitchData();
-  const s = 660; // side length of main grid square
+  const dataset = getPitchData(); // TODO: Swap this out for data returned from service
+  const width = 660; // use full width for side length of zones graphic square
   const margin = 5;
-  const titleHeight = 50;
-  const legendAreaHeight = 90;
+  const infoHeight = 50; // height for both title and legend sections
+  const gradientHeight = 20;
+  const height = width + (infoHeight + margin) + (infoHeight + margin);
+  const s = width / 5; // side length of an individual, non-ball zone square
 
   // use lineupbuilder blue (low) and red (high) colors
   const lowColor = d3.lab('rgba(0, 148, 217, 1)');
   const highColor = d3.lab('rgba(191, 49, 0, 1)');
-
-  // calculate coordinates for circle centers
-  const getCx = (d, i) => ((2 * (i % 3)) + 1) * (s / 6);
-  const getCy = (d, i) => (((2 * Math.floor(i / 3)) + 1) * (s / 6)) + titleHeight;
-
   const colorInterpolator = d3.interpolateLab(lowColor, highColor);
+
+  // get top left corner x anchor for a zone
+  function getZoneX(zoneIndex) {
+    if (zoneIndex === 10 || zoneIndex === 12) {
+      return s;
+    }
+    if (zoneIndex === 13) {
+      return 0;
+    }
+    if (zoneIndex === 11) {
+      return 4 * s;
+    }
+    return s + (((zoneIndex - 1) % 3) * s);
+  }
+
+  // get top left corner y anchor for a zone
+  function getZoneY(zoneIndex) {
+    const yOffset = infoHeight + margin;
+    if (zoneIndex === 10 || zoneIndex === 11 || zoneIndex === 13) {
+      return yOffset;
+    }
+    if (zoneIndex === 12) {
+      return yOffset + (4 * s);
+    }
+    return yOffset + s + (Math.floor((zoneIndex - 1) / 3) * s);
+  }
+
+  function getZoneWidth(zoneIndex) {
+    if (zoneIndex === 10 || zoneIndex === 12) {
+      return 3 * s;
+    }
+    return s;
+  }
+
+  function getZoneHeight(zoneIndex) {
+    if (zoneIndex === 11 || zoneIndex === 13) {
+      return 5 * s;
+    }
+    return s;
+  }
+
   const svg = d3.select('#app')
     .append('svg')
-    .attr('width', s)
-    .attr('height', s + (titleHeight + margin) + (legendAreaHeight + margin));
+    .attr('width', width)
+    .attr('height', height);
 
   const linearGradient = svg.append('defs')
-    .append('linearGradient')
-    .attr('id', 'linear-gradient');
-
+  .append('linearGradient')
+  .attr('id', 'linear-gradient');
   linearGradient.attr('x1', '0%')
     .attr('y1', '0%')
     .attr('x2', '100%')
@@ -36,37 +85,36 @@ const getPitchData = window.generatePitchData;
     .attr('offset', '100%')
     .attr('stop-color', highColor);
 
-  // Add colored rectangles to display pitch distribution
+  // Add zones colored by pitch totals
   svg.selectAll('rect')
     .data(dataset)
     .enter()
     .append('rect')
-    .attr('x', (d, i) => ((i % 3) * s) / 3)
-    .attr('y', (d, i) => titleHeight + ((Math.floor(i / 3) * s) / 3))
-    .attr('width', s / 3)
-    .attr('height', s / 3)
+    .attr('x', (d, i) => getZoneX(i + 1))
+    .attr('y', (d, i) => getZoneY(i + 1))
+    .attr('width', (d, i) => getZoneWidth(i + 1))
+    .attr('height', (d, i) => getZoneHeight(i + 1))
     .style('fill', d => colorInterpolator(d.colorPct))
     .style('stroke', 'rgba(20, 20, 20, 0.1)');
 
-  // Add pitch percentage text
+  // Add zone-specific pitch rates
   svg.selectAll('text')
     .data(dataset)
     .enter()
     .append('text')
     .text(d => `${(100 * d.pitchRate).toFixed(2)}%`)
-    .attr('x', getCx)
-    .attr('y', getCy)
+    .attr('x', (d, i) => getZoneX(i + 1) + (getZoneWidth(i + 1) / 2))
+    .attr('y', (d, i) => getZoneY(i + 1) + (getZoneHeight(i + 1) / 2))
     .attr('font-size', '1.3em')
     .style('fill', 'white')
     .style('text-anchor', 'middle')
-    .style('alignment-baseline', 'central')
-    .style('text-transform', 'uppercase');
+    .style('alignment-baseline', 'central');
 
   // Add pitcher name
   svg.append('text')
     .text('Jon Lester')
-    .attr('x', s / 2)
-    .attr('y', titleHeight - margin)
+    .attr('x', width / 2)
+    .attr('y', infoHeight - margin)
     .attr('font-size', '1.8em')
     .attr('font-weight', 300)
     .style('text-anchor', 'middle')
@@ -76,18 +124,19 @@ const getPitchData = window.generatePitchData;
   svg.append('text')
     .text('Low Frequency')
     .attr('x', 0)
-    .attr('y', s + legendAreaHeight);
+    .attr('y', height - margin);
   svg.append('text')
     .text('High Frequency')
-    .attr('x', 300)
-    .attr('y', s + legendAreaHeight)
+    .attr('x', width / 2)
+    .attr('y', height - margin)
     .style('text-anchor', 'end');
   svg.append('rect')
     .attr('x', 0)
-    .attr('y', s + legendAreaHeight + margin)
-    .attr('width', 300)
-    .attr('height', 20)
+    .attr('y', height - infoHeight)
+    .attr('width', width / 2)
+    .attr('height', gradientHeight)
     .style('fill', 'url(#linear-gradient)');
+
 
   // Shared text styles
   svg.selectAll('text')
